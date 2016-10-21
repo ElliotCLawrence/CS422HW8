@@ -66,19 +66,24 @@ namespace CS422
 
     public class StandardFileSystem : FileSys422
     {
-        Dir422 root;
+        static Dir422 root;
 
         public override Dir422 GetRoot()
         {
             return root;
         }
+
+        public static StandardFileSystem Create(string rootDir)
+        {
+            //create new directory object
+            //return a new standardfilesystem
+
+        }
     }
 
     public class StdFSDir : Dir422
     {
-        private string m_path;
-        private string dirName;
-        private Dir422 parentDir;
+        private string m_path;       
         
 
         public StdFSDir(string path)
@@ -90,7 +95,7 @@ namespace CS422
         {
             get
             {
-                return dirName;
+                return Path.GetFileName(m_path);
             }
         }
 
@@ -98,21 +103,29 @@ namespace CS422
         {
             get
             {
-                return parentDir;
+                return new StdFSDir(Directory.GetParent(m_path).FullName);
             }
         }
 
         public override bool ContainsDir(string dirName, bool recursive)
         {
+            if (dirName.Contains("/") || dirName.Contains("\\"))
+            {
+                return false;
+            }
+
+
             foreach (string dir in Directory.GetDirectories(m_path))
             {
-                
-
+                if (Path.GetDirectoryName(dir) == dirName)
+                {
+                    return true;
+                }
             }
 
             if (recursive == true) //if recursive not true, return false
             {
-                foreach (StdFSDir child in directoryChildren) //if it is true, search children
+                foreach (Dir422 child in this.GetDirs()) //if it is true, search children
                 {
                     if (child.ContainsDir(dirName, true))
                         return true;
@@ -139,17 +152,26 @@ namespace CS422
 
         public override Dir422 getDir(string name)
         {
-            throw new NotImplementedException();
+            //check immediate children
+
+            return null;
         }
 
         public override IList<Dir422> GetDirs()
         {
-            throw new NotImplementedException();
+            List<Dir422> dirs = new List<Dir422>();
+            foreach (string dir in Directory.GetFiles(m_path))
+            {
+                dirs.Add(new StdFSDir(dir));
+            }
+            return dirs;
         }
 
         public override File422 GetFile(string name)
         {
-            throw new NotImplementedException();
+            //check immediate children
+
+            return null;
         }
 
         public override List<File422> GetFiles()
@@ -345,3 +367,5 @@ namespace CS422
         }
     }
 }
+
+//overwrite observable stream class
