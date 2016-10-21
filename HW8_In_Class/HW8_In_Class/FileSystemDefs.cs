@@ -66,7 +66,7 @@ namespace CS422
 
     public class StandardFileSystem : FileSys422
     {
-        static Dir422 root;
+        static Dir422 root; //shared between all FS
 
         public override Dir422 GetRoot()
         {
@@ -75,9 +75,8 @@ namespace CS422
 
         public static StandardFileSystem Create(string rootDir)
         {
-            //create new directory object
-            //return a new standardfilesystem
-
+            root = new StdFSDir(rootDir);
+            return new StandardFileSystem();
         }
     }
 
@@ -103,6 +102,7 @@ namespace CS422
         {
             get
             {
+                
                 return new StdFSDir(Directory.GetParent(m_path).FullName);
             }
         }
@@ -137,30 +137,49 @@ namespace CS422
 
         public override bool ContainsFile(string fileName, bool recursive)
         {
-            throw new NotImplementedException();
+            foreach (string file in Directory.GetFiles(m_path))
+            {
+                if (Path.GetFileName(file) == fileName)
+                    return true;
+            }
+            return false;
         }
 
         public override Dir422 CreateDir(string name)
         {
-            throw new NotImplementedException();
+            string fullName = m_path+"/"+name;
+            if (Directory.CreateDirectory(fullName) != null)
+                return new StdFSDir(fullName);
+            else
+                return null;
+
         }
 
         public override File422 CreateFile(string name)
         {
-            throw new NotImplementedException();
+            string fullName = m_path + "/" + name;
+            if (File.Create(fullName) != null)
+                return new StdFSFile(fullName);
+            else
+                return null;
         }
 
         public override Dir422 getDir(string name)
         {
-            //check immediate children
+            string fullName = m_path + "/" + name;
+            foreach (string dir in Directory.GetDirectories(m_path))
+            {
+                if (dir == fullName)
+                    return new StdFSDir(fullName);
+            }
 
-            return null;
+                return null;
         }
 
         public override IList<Dir422> GetDirs()
         {
             List<Dir422> dirs = new List<Dir422>();
-            foreach (string dir in Directory.GetFiles(m_path))
+            foreach (string dir in Directory.GetDirectories(m_path))
             {
                 dirs.Add(new StdFSDir(dir));
             }
@@ -169,7 +188,12 @@ namespace CS422
 
         public override File422 GetFile(string name)
         {
-            //check immediate children
+            string fullName = m_path + "/" + name;
+            foreach (string file in Directory.GetFiles(m_path))
+            {
+                if (file == fullName)
+                    return new StdFSFile(fullName);
+            }
 
             return null;
         }
@@ -179,27 +203,27 @@ namespace CS422
             List<File422> files = new List<File422>();
             foreach (string file in Directory.GetFiles(m_path))
             {
-                files.Add(new STDFSFile(file));
+                files.Add(new StdFSFile(file));
             }
             return files;
         }
     }
 
-    public class STDFSFile : File422
+    public class StdFSFile : File422
     {
         private string m_path;
 
-        public STDFSFile(string path) { m_path = path; }
+        public StdFSFile(string path) { m_path = path; }
 
         public override Stream OpenReadOnly() //one line function return a stream with m_path in it
         {
-            throw new NotImplementedException();
+            return File.Open(m_path, FileMode.Open, FileAccess.Read);
         }
 
         public override Stream OpenReadWrite() //one line function return a stream with m_path in it
                                                //if you fail to open this stream, return null, don't throw exception
         {
-            throw new NotImplementedException();
+            return File.Open(m_path, FileMode.Open, FileAccess.ReadWrite);
         }
     }
 
@@ -211,6 +235,11 @@ namespace CS422
         public override Dir422 GetRoot()
         {
             return root;
+        }
+
+        public MemoryFileSystem()
+        {
+            root = new MemFSDir("/");
         }
     }
 
@@ -225,6 +254,8 @@ namespace CS422
         public MemFSDir(string name)
         {
             this.name = name;
+            directoryChildren = new List<Dir422>();
+            fileChildren = new List<File422>();
         }
 
         public override string Name
