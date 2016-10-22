@@ -239,7 +239,7 @@ namespace CS422
 
         public MemoryFileSystem()
         {
-            root = new MemFSDir("/");
+            root = new MemFSDir("/", null);
         }
     }
 
@@ -251,9 +251,10 @@ namespace CS422
         private List<File422> fileChildren;
         private string name;
 
-        public MemFSDir(string name)
+        public MemFSDir(string name, MemFSDir parentD)
         {
             this.name = name;
+            dirParent = parentD;
             directoryChildren = new List<Dir422>();
             fileChildren = new List<File422>();
         }
@@ -316,13 +317,14 @@ namespace CS422
 
         public override Dir422 CreateDir(string name)
         {
-            directoryChildren.Add(new MemFSDir(name));
+            directoryChildren.Add(new MemFSDir(name, this));
             return directoryChildren[directoryChildren.Count-1];
         }
 
         public override File422 CreateFile(string name)
         {
-            fileChildren.Add(new MemFSFile(name));
+            
+            fileChildren.Add(new MemFSFile(name, this));
             return fileChildren[fileChildren.Count - 1];
         }
 
@@ -363,10 +365,16 @@ namespace CS422
     {
         private string fileName;
         MemFSDir parentDir;
+        List<Stream> readers;
+        Stream writer;
+        List<byte> contents;
 
-        public MemFSFile(string name)
+        public MemFSFile(string name, MemFSDir parentDir)
         {
             this.fileName = name;
+            readers = new Stream[];
+            writer = null;
+            contents = new List<byte>();
         }
 
         public string Name
@@ -387,15 +395,62 @@ namespace CS422
 
 
 
-        public override Stream OpenReadOnly()
+        public override Stream OpenReadOnly() 
         {
-            throw new NotImplementedException();
+            return new trackingMemStream(false, this);
         }
 
         public override Stream OpenReadWrite()
         {
-            throw new NotImplementedException();
+            lock (writer)
+            {
+                if (writer != null)
+                    return null;
+
+
+                else
+                {
+                    writer = new trackingMemStream(true, this);
+                    return writer;
+                }
+            }
         }
+
+
+        class trackingMemStream : MemoryStream
+        {
+            MemoryStream actualStream;
+            private bool canWrite;
+            File422 file;
+
+            public trackingMemStream( bool write, File422 originFile)
+            {
+                actualStream = new MemoryStream();
+                canWrite = write;
+                file = originFile;
+            }
+            public override bool CanWrite
+            {
+                get
+                {
+                    if (canWrite && actualStream.CanWrite)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                return actualStream.Read(buffer, offset, count);
+            }
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                if (this.CanWrite)
+                    actualStream.Write(buffer, offset, count);
+                else
+                    throw new NotSupportedException();
+            }
+        } //end special stream
     }
 }
 
