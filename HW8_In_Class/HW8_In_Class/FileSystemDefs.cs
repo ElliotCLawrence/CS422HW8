@@ -109,7 +109,7 @@ namespace CS422
 
         public override bool ContainsDir(string dirName, bool recursive) //checks if the directory contains the directory
         {
-            if (dirName.Contains("/") || dirName.Contains("\\"))
+            if (dirName == null || dirName == "" || dirName.Contains("/") || dirName.Contains("\\"))
             {
                 return false;
             }
@@ -137,6 +137,9 @@ namespace CS422
 
         public override bool ContainsFile(string fileName, bool recursive)//checks if the directory contains the file
         {
+            if (fileName == null || fileName == "" || fileName.Contains("/") || fileName.Contains("\\"))
+                return false;
+
             foreach (string file in Directory.GetFiles(m_path))
             {
                 if (Path.GetFileName(file) == fileName)
@@ -147,6 +150,9 @@ namespace CS422
 
         public override Dir422 CreateDir(string name)//creates a directory and gives back a copy
         {
+            if (name == null || name == "" || name.Contains("/") || name.Contains("\\"))
+                return null;
+
             string fullName = m_path+"/"+name;
             if (Directory.CreateDirectory(fullName) != null)
                 return new StdFSDir(fullName);
@@ -157,6 +163,9 @@ namespace CS422
 
         public override File422 CreateFile(string name)//creates a file and gives back a copy
         {
+            if (name == null || name == "" || name.Contains("/") || name.Contains("\\"))
+                return null;
+
             string fullName = m_path + "/" + name;
             if (File.Create(fullName) != null)
                 return new StdFSFile(fullName);
@@ -293,6 +302,11 @@ namespace CS422
 
         public override bool ContainsDir(string dirName, bool recursive) //checks if the directory contains the child
         {
+
+            if (dirName == null || dirName == "" || dirName.Contains("/") || dirName.Contains("\\"))
+                return false;
+
+
             foreach (MemFSDir child in directoryChildren) //check all the files in this folder for a match
             {
                 if (child.Name == dirName)
@@ -313,6 +327,9 @@ namespace CS422
 
         public override bool ContainsFile(string fileName, bool recursive) //checks if the directory contains the file
         {
+            if (fileName == null || fileName == "" || fileName.Contains("/") || fileName.Contains("\\"))
+                return false;
+
             foreach (MemFSFile child in fileChildren) //check all the files in this folder for a match
             {
                 if (child.Name == fileName)
@@ -333,13 +350,16 @@ namespace CS422
 
         public override Dir422 CreateDir(string name) //creates a directory and gives back a copy
         {
+            if (name == null || name == "" || name.Contains("/") || name.Contains("\\"))
+                return null;
             directoryChildren.Add(new MemFSDir(name, this));
             return directoryChildren[directoryChildren.Count-1];
         }
 
         public override File422 CreateFile(string name) //creates a file and gives back a copy
         {
-            
+            if (name == null || name == "" || name.Contains("/") || name.Contains("\\"))
+                return null;
             fileChildren.Add(new MemFSFile(name, this));
             return fileChildren[fileChildren.Count - 1];
         }
