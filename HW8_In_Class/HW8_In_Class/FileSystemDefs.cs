@@ -107,7 +107,7 @@ namespace CS422
             }
         }
 
-        public override bool ContainsDir(string dirName, bool recursive)
+        public override bool ContainsDir(string dirName, bool recursive) //checks if the directory contains the directory
         {
             if (dirName.Contains("/") || dirName.Contains("\\"))
             {
@@ -115,7 +115,7 @@ namespace CS422
             }
 
 
-            foreach (string dir in Directory.GetDirectories(m_path))
+            foreach (string dir in Directory.GetDirectories(m_path)) 
             {
                 if (Path.GetDirectoryName(dir) == dirName)
                 {
@@ -135,7 +135,7 @@ namespace CS422
             return false;
         }
 
-        public override bool ContainsFile(string fileName, bool recursive)
+        public override bool ContainsFile(string fileName, bool recursive)//checks if the directory contains the file
         {
             foreach (string file in Directory.GetFiles(m_path))
             {
@@ -145,7 +145,7 @@ namespace CS422
             return false;
         }
 
-        public override Dir422 CreateDir(string name)
+        public override Dir422 CreateDir(string name)//creates a directory and gives back a copy
         {
             string fullName = m_path+"/"+name;
             if (Directory.CreateDirectory(fullName) != null)
@@ -155,7 +155,7 @@ namespace CS422
 
         }
 
-        public override File422 CreateFile(string name)
+        public override File422 CreateFile(string name)//creates a file and gives back a copy
         {
             string fullName = m_path + "/" + name;
             if (File.Create(fullName) != null)
@@ -164,7 +164,7 @@ namespace CS422
                 return null;
         }
 
-        public override Dir422 getDir(string name)
+        public override Dir422 getDir(string name)//gets a directory if it exists in current directory
         {
             string fullName = m_path + "/" + name;
             foreach (string dir in Directory.GetDirectories(m_path))
@@ -176,7 +176,7 @@ namespace CS422
                 return null;
         }
 
-        public override IList<Dir422> GetDirs()
+        public override IList<Dir422> GetDirs()//gets a directory if it exists in current directory
         {
             List<Dir422> dirs = new List<Dir422>();
             foreach (string dir in Directory.GetDirectories(m_path))
@@ -186,7 +186,7 @@ namespace CS422
             return dirs;
         }
 
-        public override File422 GetFile(string name)
+        public override File422 GetFile(string name)//returns a file if it exists in current directory
         {
             string fullName = m_path + "/" + name;
             foreach (string file in Directory.GetFiles(m_path))
@@ -198,7 +198,7 @@ namespace CS422
             return null;
         }
 
-        public override List<File422> GetFiles()
+        public override List<File422> GetFiles() //returns all files in current directory
         {
             List<File422> files = new List<File422>();
             foreach (string file in Directory.GetFiles(m_path))
@@ -267,7 +267,7 @@ namespace CS422
         private List<File422> fileChildren;
         private string name;
 
-        public MemFSDir(string name, MemFSDir parentD)
+        public MemFSDir(string name, MemFSDir parentD) //this is the constructor for this class
         {
             this.name = name;
             dirParent = parentD;
@@ -275,7 +275,7 @@ namespace CS422
             fileChildren = new List<File422>();
         }
 
-        public override string Name
+        public override string Name //getter for name
         {
             get
             {
@@ -283,7 +283,7 @@ namespace CS422
             }
         }
 
-        public override Dir422 Parent
+        public override Dir422 Parent //getter for parent
         {
             get
             {
@@ -291,7 +291,7 @@ namespace CS422
             }
         }
 
-        public override bool ContainsDir(string dirName, bool recursive)
+        public override bool ContainsDir(string dirName, bool recursive) //checks if the directory contains the child
         {
             foreach (MemFSDir child in directoryChildren) //check all the files in this folder for a match
             {
@@ -311,7 +311,7 @@ namespace CS422
             return false;
         }
 
-        public override bool ContainsFile(string fileName, bool recursive)
+        public override bool ContainsFile(string fileName, bool recursive) //checks if the directory contains the file
         {
             foreach (MemFSFile child in fileChildren) //check all the files in this folder for a match
             {
@@ -331,20 +331,20 @@ namespace CS422
             return false;
         }
 
-        public override Dir422 CreateDir(string name)
+        public override Dir422 CreateDir(string name) //creates a directory and gives back a copy
         {
             directoryChildren.Add(new MemFSDir(name, this));
             return directoryChildren[directoryChildren.Count-1];
         }
 
-        public override File422 CreateFile(string name)
+        public override File422 CreateFile(string name) //creates a file and gives back a copy
         {
             
             fileChildren.Add(new MemFSFile(name, this));
             return fileChildren[fileChildren.Count - 1];
         }
 
-        public override Dir422 getDir(string name)
+        public override Dir422 getDir(string name) //gets a directory if it exists in current directory
         {
             for (int x = 0; x < directoryChildren.Count; x++)
             {
@@ -355,12 +355,12 @@ namespace CS422
             return null;
         }
 
-        public override IList<Dir422> GetDirs()
+        public override IList<Dir422> GetDirs() //returns all directories in current directory
         {
             return directoryChildren;
         }
 
-        public override File422 GetFile(string name)
+        public override File422 GetFile(string name) //returns a file if it exists in current directory
         {
             for (int x = 0; x < fileChildren.Count; x++)
             {
@@ -371,7 +371,7 @@ namespace CS422
             return null;
         }
 
-        public override List<File422> GetFiles()
+        public override List<File422> GetFiles() //returns all files in current directory
         {
             return fileChildren;
         }
@@ -443,14 +443,14 @@ namespace CS422
         }
 
 
-        class trackingMemStream : MemoryStream
+        class trackingMemStream : MemoryStream //custom memory stream
         {
             MemoryStream actualStream;
             private bool canWrite;
             MemFSFile file;
             long position;
 
-            public trackingMemStream(bool write, MemFSFile originFile)
+            public trackingMemStream(bool write, MemFSFile originFile) //constructor class
             {
                     actualStream = new MemoryStream();
                     originFile.data.CopyTo(actualStream);
@@ -514,7 +514,7 @@ namespace CS422
                 return 0;
             }
 
-            public override void Write(byte[] buffer, int offset, int count)
+            public override void Write(byte[] buffer, int offset, int count) //write to this stream, and the data stream which holds onto data just like a file would
             {
                 if (this.CanWrite)
                 {
@@ -522,7 +522,7 @@ namespace CS422
                     actualStream.Write(buffer, offset, count);
                     file.mdata.Write(buffer, offset, count);
 
-                    position = file.mdata.Position; //set the position of this 
+                    
                     return;
                 }
                     
@@ -535,7 +535,11 @@ namespace CS422
                 
                 if (this.canWrite)
                 {
-                    file.writer = null;
+                    lock (file.writer)
+                    {
+                        file.writer = null;
+                    }
+                    
                 }
                 else //reader
                 {
@@ -543,7 +547,6 @@ namespace CS422
                     {
                         file.readers.Remove(this);
                     }
-                        
                 }
 
                 actualStream.Close();
