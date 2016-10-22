@@ -1,4 +1,12 @@
-﻿using System;
+﻿//Elliot Lawrence
+//HW8
+//CS 422
+//10_21_2016
+
+
+
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -462,11 +470,7 @@ namespace CS422
                     return writer[0]; //writer is only ever size 1 or 0
                 }
             }
-               
-                
-            
         }
-
 
         class trackingMemStream : MemoryStream //custom memory stream
         {
@@ -479,6 +483,7 @@ namespace CS422
             {
                     actualStream = new MemoryStream();
                     originFile.data.CopyTo(actualStream);
+                    actualStream.Position = 0;
                     canWrite = write;
                     file = originFile;
                     position = 0;
@@ -546,8 +551,6 @@ namespace CS422
                     file.mdata.Position = position; //set the position of the other stream before writing
                     actualStream.Write(buffer, offset, count);
                     file.mdata.Write(buffer, offset, count);
-
-                    
                     return;
                 }
                     
@@ -562,6 +565,7 @@ namespace CS422
                 {
                     lock (file.writer)
                     {
+                        file.mdata.Position = 0;
                         file.writer.Remove(this);
                     }
                     
