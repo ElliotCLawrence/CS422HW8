@@ -36,9 +36,9 @@ namespace CS422
 
     public abstract class File422
     {
-        public string Name { get; }
+        public abstract string Name { get; }
 
-        public Dir422 Parent { get; }
+        public abstract Dir422 Parent { get; }
 
         public abstract Stream OpenReadOnly();
 
@@ -215,6 +215,22 @@ namespace CS422
 
         public StdFSFile(string path) { m_path = path; }
 
+        public override string Name
+        {
+            get
+            {
+                return Path.GetFileName(m_path);
+            }
+        }
+
+        public override Dir422 Parent
+        {
+            get
+            {
+                return new StdFSDir(Directory.GetParent(m_path).FullName);
+            }
+        }
+
         public override Stream OpenReadOnly() //one line function return a stream with m_path in it
         {
             return File.Open(m_path, FileMode.Open, FileAccess.Read);
@@ -386,7 +402,7 @@ namespace CS422
             }
         }
 
-        public string Name
+        public override string Name
         {
             get
             {
@@ -394,7 +410,7 @@ namespace CS422
             }
         }
 
-        public MemFSDir Parent
+        public override Dir422 Parent
         {
             get
             {
@@ -493,7 +509,9 @@ namespace CS422
 
             public override int Read(byte[] buffer, int offset, int count)
             {
+                if (this.CanRead)
                     return actualStream.Read(buffer, offset, count);
+                return 0;
             }
 
             public override void Write(byte[] buffer, int offset, int count)
