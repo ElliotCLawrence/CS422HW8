@@ -402,7 +402,7 @@ namespace CS422
         private string fileName;
         MemFSDir parentDir;
         List<trackingMemStream> readers;
-        trackingMemStream writer;
+        List<trackingMemStream> writer; //this is a list so you can lock on it.
         MemoryStream data;
 
         public MemFSFile(string name, MemFSDir parent)
@@ -410,7 +410,7 @@ namespace CS422
             this.fileName = name;
             parentDir = parent;
             readers = new List<trackingMemStream>() ;
-            writer = null;
+            writer = new List<trackingMemStream>(); 
             data = new MemoryStream();
         }
 
@@ -440,26 +440,31 @@ namespace CS422
 
         public override Stream OpenReadOnly() 
         {
-            lock (writer )
+            lock (writer)
             {
-                if (writer == null)
+                if (writer.Count == 0)
                     return new trackingMemStream(false, this);
                 return null;
             }
+               
+            
         }
 
         public override Stream OpenReadWrite()
         {
-            lock (writer)
+           lock (writer)
             {
-                if (writer != null && readers.Count > 0 )
+                if (writer.Count > 0 || readers.Count > 0) //don't create a writer if there is 1 reader or 1 writer
                     return null;
                 else
                 {
-                    writer = new trackingMemStream(true, this);
-                    return writer;
+                    writer.Add(new trackingMemStream(true, this));
+                    return writer[0]; //writer is only ever size 1 or 0
                 }
             }
+               
+                
+            
         }
 
 
@@ -557,7 +562,7 @@ namespace CS422
                 {
                     lock (file.writer)
                     {
-                        file.writer = null;
+                        file.writer.Remove(this);
                     }
                     
                 }
