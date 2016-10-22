@@ -365,16 +365,25 @@ namespace CS422
     {
         private string fileName;
         MemFSDir parentDir;
-        List<Stream> readers;
-        Stream writer;
-        List<byte> contents;
+        List<trackingMemStream> readers;
+        trackingMemStream writer;
+        MemoryStream data;
 
-        public MemFSFile(string name, MemFSDir parentDir)
+        public MemFSFile(string name, MemFSDir parent)
         {
             this.fileName = name;
-            readers = new Stream[];
+            parentDir = parent;
+            readers = new List<trackingMemStream>() ;
             writer = null;
-            contents = new List<byte>();
+            data = new MemoryStream();
+        }
+
+        public MemoryStream mdata
+        {
+            get
+            {
+                return data;
+            }
         }
 
         public string Name
@@ -393,21 +402,22 @@ namespace CS422
             }
         }
 
-
-
         public override Stream OpenReadOnly() 
         {
-            return new trackingMemStream(false, this);
+            lock (writer )
+            {
+                if (writer == null)
+                    return new trackingMemStream(false, this);
+                return null;
+            }
         }
 
         public override Stream OpenReadWrite()
         {
             lock (writer)
             {
-                if (writer != null)
+                if (writer != null && readers.Count > 0 )
                     return null;
-
-
                 else
                 {
                     writer = new trackingMemStream(true, this);
@@ -421,14 +431,18 @@ namespace CS422
         {
             MemoryStream actualStream;
             private bool canWrite;
-            File422 file;
+            MemFSFile file;
+            long position;
 
-            public trackingMemStream( bool write, File422 originFile)
+            public trackingMemStream(bool write, MemFSFile originFile)
             {
-                actualStream = new MemoryStream();
-                canWrite = write;
-                file = originFile;
+                    actualStream = new MemoryStream();
+                    originFile.data.CopyTo(actualStream);
+                    canWrite = write;
+                    file = originFile;
+                    position = 0;
             }
+
             public override bool CanWrite
             {
                 get
@@ -439,16 +453,98 @@ namespace CS422
                         return false;
                 }
             }
+
+            public override bool CanRead
+            {
+                get
+                {
+                    return actualStream.CanRead;
+                }
+            }
+
+            public override bool CanSeek
+            {
+                get
+                {
+                    return actualStream.CanSeek;
+                }
+            }
+
+            public override long Length
+            {
+                get
+                {
+                    return actualStream.Length;
+                }
+            }
+
+            public override long Position
+            {
+                get
+                {
+                    return actualStream.Position;
+                }
+
+                set
+                {
+                    actualStream.Position = value;
+                }
+            }
+
             public override int Read(byte[] buffer, int offset, int count)
             {
-                return actualStream.Read(buffer, offset, count);
+                    return actualStream.Read(buffer, offset, count);
             }
+
             public override void Write(byte[] buffer, int offset, int count)
             {
                 if (this.CanWrite)
+                {
+                    file.mdata.Position = position; //set the position of the other stream before writing
                     actualStream.Write(buffer, offset, count);
+                    file.mdata.Write(buffer, offset, count);
+
+                    position = file.mdata.Position; //set the position of this 
+                    return;
+                }
+                    
                 else
                     throw new NotSupportedException();
+            }
+
+            public override void Close()
+            {
+                
+                if (this.canWrite)
+                {
+                    file.writer = null;
+                }
+                else //reader
+                {
+                    lock (file.readers)
+                    {
+                        file.readers.Remove(this);
+                    }
+                        
+                }
+
+                actualStream.Close();
+                base.Close();
+            }
+
+            public override long Seek(long offset, SeekOrigin loc)
+            {
+                return actualStream.Seek(offset, loc);
+            }
+
+            public override void Flush()
+            {
+                actualStream.Flush();
+            }
+
+            public override void SetLength(long value)
+            {
+                actualStream.SetLength(value);
             }
         } //end special stream
     }
